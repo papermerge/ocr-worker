@@ -37,7 +37,7 @@ def ocr_document_task(document_id, lang):
     doc_ver_path = plib.abs_docver_path(doc_ver.id, doc_ver.file_name)
     _type, encoding = mimetypes.guess_type(doc_ver_path)
     if _type is None:
-        raise ValueError("Mimetype of the")
+        raise ValueError("Could not guess mimetype")
 
     if encoding not in ("application/pdf", "application/image"):
         raise ValueError(f"Unsupported format for document: {doc_ver_path}")
