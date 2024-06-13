@@ -12,7 +12,6 @@ from ocrworker import config, constants, db, models, plib
 logger = logging.getLogger(__name__)
 db_session = db.get_db()
 
-logger = logging.getLogger(__name__)
 settings = config.get_settings()
 
 STARTED = "started"
