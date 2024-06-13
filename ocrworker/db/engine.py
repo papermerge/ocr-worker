@@ -9,9 +9,10 @@ SQLALCHEMY_DATABASE_URL = settings.papermerge__database__url
 
 connect_args = {}
 
-if SQLALCHEMY_DATABASE_URL.startswith('sqlite'):
-  # sqlite specific connection args
-  connect_args = {"check_same_thread": False}
+
+if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
+    # sqlite specific connection args
+    connect_args = {"check_same_thread": False}
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,

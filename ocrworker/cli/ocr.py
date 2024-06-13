@@ -11,10 +11,7 @@ app = typer.Typer(help="OCR documents")
 settings = config.get_settings()
 Session = db.get_db()
 
-DocIDsType = Annotated[
-    Optional[list[uuid.UUID]],
-    typer.Argument()
-]
+DocIDsType = Annotated[Optional[list[uuid.UUID]], typer.Argument()]
 
 
 @app.command(name="ocr")
@@ -28,4 +25,3 @@ def ocr_cmd(
         items = []  # to be added to the index
         for doc in docs:
             pass
-

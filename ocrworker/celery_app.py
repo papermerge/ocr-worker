@@ -6,9 +6,7 @@ from celery.signals import setup_logging
 settings = config.get_settings()
 
 app = Celery(
-    'ocrworker',
-    broker=settings.papermerge__redis__url,
-    include=['ocrworker.tasks']
+    "ocrworker", broker=settings.papermerge__redis__url, include=["ocrworker.tasks"]
 )
 
 app.autodiscover_tasks()
@@ -30,5 +28,5 @@ def config_loggers(*args, **kwags):
         utils.setup_logging(settings.papermerge__main__logging_cfg)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.start()
