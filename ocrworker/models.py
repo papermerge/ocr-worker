@@ -1,6 +1,7 @@
 from enum import Enum
 from uuid import UUID
-from pydantic import (BaseModel, ConfigDict, Field)
+
+from pydantic import BaseModel, ConfigDict
 
 
 class NodeType(str, Enum):
@@ -22,8 +23,8 @@ class Page(BaseModel):
     id: UUID
     number: int
     document_version_id: UUID
-    lang: str = 'en'
-    text: str = ''
+    lang: str = "en"
+    text: str = ""
     # Config
     model_config = ConfigDict(from_attributes=True)
 
