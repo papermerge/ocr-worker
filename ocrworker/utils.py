@@ -25,3 +25,6 @@ def get_pdf_page_count(content: io.BytesIO | bytes) -> int:
     pdf.close()
 
     return page_count
+
+
+def stitch_pdf(src: list[Path], dst: Path): ...

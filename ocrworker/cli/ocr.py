@@ -1,16 +1,36 @@
 import uuid
+from pathlib import Path
 
 import typer
 
-from ocrworker import config, db
-from ocrworker.tasks import ocr_document_task
+from ocrworker.ocr import run_ocr
 
 app = typer.Typer(help="OCR documents")
-settings = config.get_settings()
-Session = db.get_db()
+
+
+@app.command(name="ocrmypdf")
+def ocrmypdf_cmd(
+    file_path: Path,
+    output_dir: Path,
+    sidecar_dir: Path,
+    page_number: int = 1,
+    lang: str = "deu",
+    preview_width: int = 300,
+):
+    """Raw OCR command - invokes directly ocrmypdf module"""
+    target_page_id = uuid.uuid4()
+    print(f"Target page ID={target_page_id}")
+
+    run_ocr(
+        file_path=file_path,
+        output_dir=output_dir,
+        sidecar_dir=sidecar_dir,
+        uuid=target_page_id,
+        page_number=page_number,
+        lang=lang,
+        preview_width=preview_width,
+    )
 
 
 @app.command(name="ocr")
-def ocr_cmd(doc_id: uuid.UUID, lang: str):
-
-    ocr_document_task(document_id=doc_id, lang=lang)
+def ocr_cmd(): ...

@@ -927,16 +927,18 @@ name = "ocrmypdf-papermerge"
 version = "0.6.0"
 description = "OCRmyPDF plugin to generate SVG files for Papermerge"
 optional = false
-python-versions = "<4.0,>=3.11"
-files = [
-    {file = "ocrmypdf_papermerge-0.6.0-py3-none-any.whl", hash = "sha256:22ae647d172ad9f27bc0cf25fd1e48742063aade5fb97463807c9f29a0dde9f3"},
-    {file = "ocrmypdf_papermerge-0.6.0.tar.gz", hash = "sha256:ac0296bfbb682d6decb9b61ab0f50ae0707140f8736c1c1000d515a23e42b04a"},
-]
+python-versions = ">=3.11, <4.0"
+files = []
+develop = true
 
 [package.dependencies]
-Jinja2 = ">=3.1.2,<4.0.0"
-lxml = ">=4.9.0,<5.0.0"
-ocrmypdf = ">=16.3.1,<17.0.0"
+Jinja2 = "^3.1.2"
+lxml = "^4.9.0"
+ocrmypdf = "^16.3.1"
+
+[package.source]
+type = "directory"
+url = "../OCRmyPDF_papermerge"
 
 [[package]]
 name = "packaging"
@@ -1399,13 +1401,13 @@ typing-extensions = ">=4.6.0,<4.7.0 || >4.7.0"
 
 [[package]]
 name = "pydantic-settings"
-version = "2.3.2"
+version = "2.3.3"
 description = "Settings management using Pydantic"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pydantic_settings-2.3.2-py3-none-any.whl", hash = "sha256:ae06e44349e4c7bff8d57aff415dfd397ae75c217a098d54e9e6990ad7594ac7"},
-    {file = "pydantic_settings-2.3.2.tar.gz", hash = "sha256:05d33003c74c2cd585de97b59eb17b6ed67181bc8a3ce594d74b5d24e4df7323"},
+    {file = "pydantic_settings-2.3.3-py3-none-any.whl", hash = "sha256:e4ed62ad851670975ec11285141db888fd24947f9440bd4380d7d8788d4965de"},
+    {file = "pydantic_settings-2.3.3.tar.gz", hash = "sha256:87fda838b64b5039b970cd47c3e8a1ee460ce136278ff672980af21516f6e6ce"},
 ]
 
 [package.dependencies]
@@ -1520,13 +1522,13 @@ files = [
 
 [[package]]
 name = "redis"
-version = "5.0.5"
+version = "5.0.6"
 description = "Python client for Redis database and key-value store"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "redis-5.0.5-py3-none-any.whl", hash = "sha256:30b47d4ebb6b7a0b9b40c1275a19b87bb6f46b3bed82a89012cf56dea4024ada"},
-    {file = "redis-5.0.5.tar.gz", hash = "sha256:3417688621acf6ee368dec4a04dd95881be24efd34c79f00d31f62bb528800ae"},
+    {file = "redis-5.0.6-py3-none-any.whl", hash = "sha256:c0d6d990850c627bbf7be01c5c4cbaadf67b48593e913bb71c9819c30df37eee"},
+    {file = "redis-5.0.6.tar.gz", hash = "sha256:38473cd7c6389ad3e44a91f4c3eaf6bcb8a9f746007f29bf4fb20824ff0b2197"},
 ]
 
 [package.dependencies]
@@ -1826,4 +1828,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "e72438ec0a6a215cb0c58ef087922010cc939536973055a5e8a40f0e40841b23"
+content-hash = "6557e917e993054bba3aa4b43f93c6700291d8e3ae4925e97c679eae01eec627"
