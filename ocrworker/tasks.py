@@ -115,8 +115,6 @@ def ocr_page_task(**kwargs):
         preview_width=preview_width,
     )
 
-    return True
-
 
 @shared_task()
 def stitch_pages_task(_, **kwargs):
@@ -133,8 +131,6 @@ def stitch_pages_task(_, **kwargs):
         plib.abs_page_path(page_id) / PAGE_PDF for page_id in target_page_ids
     ]
     utils.stitch_pdf(srcs=srcs, dst=dst)
-
-    return True
 
 
 @shared_task()
