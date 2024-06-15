@@ -72,7 +72,7 @@ def ocr_document_task(document_id: str, lang: str):
         )
         | notify_index_task.s(doc_id=document_id)
     )
-    workflow.apply_async()
+    workflow.apply_async(route_name="ocr")
 
 
 @shared_task()
