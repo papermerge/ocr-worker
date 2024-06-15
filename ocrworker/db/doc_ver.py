@@ -1,3 +1,4 @@
+import io
 from uuid import UUID
 
 from sqlalchemy import exc, select
@@ -151,4 +152,15 @@ def increment_doc_ver(
             )
             session.add(page)
 
+        session.commit()
+
+
+def update_doc_ver_text(
+    db_session: Session, doc_ver_id: UUID, streams: list[io.StringIO]
+):
+    pages = get_pages(db_session, doc_ver_id=doc_ver_id)
+    with db_session as session:
+        for page, stream in zip(pages, streams):
+            db_page = session.get(Page, page.id)
+            db_page.text = stream.read()
         session.commit()

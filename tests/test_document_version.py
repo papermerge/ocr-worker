@@ -1,3 +1,4 @@
+import io
 import uuid
 
 from ocrworker import db
@@ -26,3 +27,26 @@ def test_increment_doc_version(session, doc_factory):
     assert new_last_ver.id == target_docver_uuid
     assert len(new_pages) == 2
     assert new_ids == set(target_page_uuids)
+
+
+def test_update_doc_ver_text(session, doc_ver_factory):
+    doc_ver = doc_ver_factory(
+        title="receipt_001.pdf",
+        page_count=2,
+        streams=[io.StringIO("Text of page 1"), io.StringIO("Text of page 2")],
+    )
+
+    db.update_doc_ver_text(
+        session,
+        doc_ver.id,
+        streams=[
+            io.StringIO("Updated text of page 1"),
+            io.StringIO("Updated text of page 2"),
+        ],
+    )
+
+    pages = db.get_pages(session, doc_ver.id)
+    actual_txt = {page.text for page in pages}
+    expected_txt = {"Updated text of page 1", "Updated text of page 2"}
+
+    assert actual_txt == expected_txt

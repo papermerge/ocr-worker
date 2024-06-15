@@ -7,6 +7,7 @@ from .doc_ver import (
     get_page,
     get_pages,
     increment_doc_ver,
+    update_doc_ver_text,
 )
 from .engine import engine
 from .session import get_db
@@ -14,6 +15,7 @@ from .session import get_db
 __all__ = [
     "get_last_version",
     "increment_doc_ver",
+    "update_doc_ver_text",
     "get_doc_ver",
     "get_docs",
     "get_doc",

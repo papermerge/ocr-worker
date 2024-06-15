@@ -1,7 +1,9 @@
+import io
 import logging
 import mimetypes
 import uuid
 from pathlib import Path
+from celery.app import default_app as celery_app
 
 from celery import chain, group, shared_task
 
@@ -19,11 +21,11 @@ PAGE_PDF = "page.pdf"
 
 
 @shared_task()
-def ocr_document_task(document_id, lang):
+def ocr_document_task(document_id: str, lang: str):
     logger.debug(f"Task started, document_id={document_id}, lang={lang}")
 
     with db_session() as session:
-        doc_ver = db.get_last_version(session, doc_id=document_id)
+        doc_ver = db.get_last_version(session, doc_id=uuid.UUID(document_id))
         pages = db.get_pages(session, doc_ver_id=doc_ver.id)
 
     target_docver_uuid = uuid.uuid4()
@@ -64,10 +66,11 @@ def ocr_document_task(document_id, lang):
         | update_db_task.s(
             doc_id=document_id,
             doc_ver_id=doc_ver.id,
+            lang=lang,
             target_docver_id=target_docver_uuid,
             target_page_ids=target_page_uuids,
         )
-        | notify_index_task.s()
+        | notify_index_task.s(doc_id=document_id)
     )
     workflow.apply_async()
 
@@ -124,11 +127,44 @@ def stitch_pages_task(_, **kwargs):
 
 @shared_task()
 def update_db_task(_, **kwargs):
-    logger.debug(f"Update DB doc_id={kwargs}")
-    # create doc ver target version
-    # add its pages (with extracted text)
+    logger.debug(f"Update DB kwargs={kwargs}")
+
+    doc_id = kwargs["doc_id"]
+    lang = kwargs["lang"]
+    target_doc_ver_id = kwargs["target_doc_ver_id"]
+    target_page_ids = kwargs["target_page_ids"]
+
+    with db_session() as session:
+        db.increment_doc_ver(
+            session,
+            document_id=doc_id,
+            target_docver_uuid=target_doc_ver_id,
+            target_page_uuids=target_page_ids,
+            lang=lang,
+        )
+        # these are newly created pages
+        pages = db.get_pages(session, doc_ver_id=target_doc_ver_id)
+        streams = []
+        for page in pages:
+            file_path = plib.page_txt_path(page.id)
+            if file_path.exists():
+                streams.append(open(file_path))
+            else:
+                streams.append(io.StringIO(""))
+
+        db.update_doc_ver_text(
+            session, doc_ver_id=target_doc_ver_id, streams=streams
+        )
 
 
 @shared_task()
 def notify_index_task(_, **kwargs):
     logger.debug(f"Update notify index doc_id={kwargs}")
+
+    doc_id = kwargs["doc_id"]
+
+    celery_app.send_task(
+        constants.INDEX_ADD_DOCS,
+        kwargs={"doc_ids": [doc_id]},
+        route_name="i3",
+    )

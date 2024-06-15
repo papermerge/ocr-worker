@@ -1,3 +1,4 @@
+import io
 import uuid
 
 import pytest
@@ -100,3 +101,58 @@ def page_factory(session, socrates):
         return page
 
     return _create_page
+
+
+@pytest.fixture(scope="function")
+def doc_ver_factory(session, socrates):
+
+    def _create_doc_ver(
+        title: str,
+        file_name: str = "receipt_001.pdf",
+        page_count: int = 2,
+        streams: list[io.StringIO] | None = None,
+    ):
+        doc_id = uuid.uuid4()
+        doc_ver_id = uuid.uuid4()
+        doc = Document(
+            id=doc_id,
+            ctype="document",
+            title=title,
+            lang="en",
+            user_id=socrates.id,
+        )
+        doc_ver = DocumentVersion(
+            id=doc_ver_id,
+            number=1,
+            file_name=file_name,
+            document_id=doc_id,
+            page_count=page_count,
+        )
+
+        session.add_all([doc, doc_ver])
+        if streams:
+            if len(streams) != page_count:
+                raise ValueError("Streams count should be same as page count")
+
+            for page_number, stream in zip(range(1, page_count + 1), streams):
+                page = Page(
+                    id=uuid.uuid4(),
+                    number=page_number,
+                    document_version_id=doc_ver_id,
+                    text=stream.read(),
+                )
+                session.add(page)
+        else:
+            for page_number in range(1, page_count + 1):
+                page = Page(
+                    id=uuid.uuid4(),
+                    number=page_number,
+                    document_version_id=doc_ver_id,
+                )
+                session.add(page)
+
+        session.commit()
+
+        return doc_ver
+
+    return _create_doc_ver
