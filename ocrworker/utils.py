@@ -41,5 +41,8 @@ def stitch_pdf(srcs: list[Path], dst: Path):
             # source pdf files are assumed to have only one page
             target.pages.append(f.pages[0])
 
+    if not dst.parent.exists():
+        dst.parent.mkdir(parents=True, exist_ok=True)
+
     target.save(dst)
     target.close()

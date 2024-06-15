@@ -95,11 +95,14 @@ def ocr_page_task(**kwargs):
 
     output_dir = plib.abs_page_path(target_page_id)
 
+    if not output_dir.exists():
+        output_dir.mkdir(parents=True, exist_ok=True)
+
     if not sidecar_dir.parent.exists():
         sidecar_dir.parent.mkdir(parents=True, exist_ok=True)
 
     run_one_page_ocr(
-        file_path=doc_ver.file_path,
+        file_path=plib.abs_docver_path(doc_ver.id, doc_ver.file_name),
         output_dir=output_dir / PAGE_PDF,
         lang=lang,
         sidecar_dir=sidecar_dir,
@@ -116,16 +119,18 @@ def stitch_pages_task(_, **kwargs):
     logger.debug(f"Stitching pages for args={kwargs}")
 
     doc_ver_id = kwargs["doc_ver_id"]
-    target_doc_ver_id = kwargs["target_doc_ver_id"]
+    target_docver_id = kwargs["target_docver_id"]
     target_page_ids = kwargs["target_page_ids"]
     with db_session() as session:
         doc_ver = db.get_doc_ver(session, doc_ver_id)
 
-    dst = plib.abs_docver_path(target_doc_ver_id, doc_ver.file_name)
+    dst = plib.abs_docver_path(target_docver_id, doc_ver.file_name)
     srcs = [
         plib.abs_page_path(page_id) / PAGE_PDF for page_id in target_page_ids
     ]
     utils.stitch_pdf(srcs=srcs, dst=dst)
+
+    return True
 
 
 @shared_task()
