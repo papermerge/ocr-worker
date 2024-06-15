@@ -137,6 +137,7 @@ def increment_doc_ver(
             id=target_docver_uuid,
             document_id=document_id,
             number=doc_ver.number + 1,
+            lang=lang,
             file_name=doc_ver.file_name,
             page_count=doc_ver.page_count,
             short_description="With OCR text layer",
@@ -149,6 +150,7 @@ def increment_doc_ver(
                 document_version_id=target_docver_uuid,
                 number=page_number,
                 lang=lang,
+                page_count=new_doc_ver.page_count,
             )
             session.add(page)
 

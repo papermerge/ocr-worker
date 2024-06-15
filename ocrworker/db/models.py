@@ -53,9 +53,11 @@ class DocumentVersion(Base):
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
     number: Mapped[int]
+    lang: Mapped[str]
     file_name: Mapped[str]
     size: Mapped[int] = mapped_column(insert_default=0)
     page_count: Mapped[int]
+    text: Mapped[str] = mapped_column(insert_default="")
     short_description: Mapped[str] = mapped_column(insert_default="")
     document_id: Mapped[UUID] = mapped_column(
         ForeignKey("core_document.basetreenode_ptr_id")
@@ -69,6 +71,13 @@ class Page(Base):
     number: Mapped[int]
     lang: Mapped[str] = mapped_column(insert_default="en")
     text: Mapped[str] = mapped_column(insert_default="")
+    page_count: Mapped[int]
+    norm_doc_title: Mapped[str] = mapped_column(insert_default="")
+    norm_folder_title: Mapped[str] = mapped_column(insert_default="")
+    norm_breadcrump: Mapped[str] = mapped_column(insert_default="")
+    norm_text: Mapped[str] = mapped_column(insert_default="")
+    image: Mapped[str] = mapped_column(insert_default="")
+
     document_version_id: Mapped[UUID] = mapped_column(
         ForeignKey("core_documentversion.id")
     )

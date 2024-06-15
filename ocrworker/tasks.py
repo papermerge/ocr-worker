@@ -18,6 +18,7 @@ settings = config.get_settings()
 STARTED = "started"
 COMPLETE = "complete"
 PAGE_PDF = "page.pdf"
+OCR = "ocr"
 
 
 @shared_task(name=constants.WORKER_OCR_DOCUMENT)
@@ -53,7 +54,7 @@ def ocr_document_task(document_id: str, lang: str):
             target_page_id=target_page_uuid,
             lang=lang,
             preview_width=300,
-        )
+        ).set(queue=prefixed(OCR))
         for index, target_page_uuid in enumerate(target_page_uuids)
     ]
     workflow = chain(
@@ -62,17 +63,20 @@ def ocr_document_task(document_id: str, lang: str):
             doc_ver_id=doc_ver.id,
             target_docver_id=target_docver_uuid,
             target_page_ids=target_page_uuids,
-        )
+        ).set(queue=prefixed(OCR))
         | update_db_task.s(
-            doc_id=document_id,
+            doc_id=uuid.UUID(document_id),
             doc_ver_id=doc_ver.id,
             lang=lang,
             target_docver_id=target_docver_uuid,
             target_page_ids=target_page_uuids,
-        )
-        | notify_index_task.s(doc_id=document_id)
+        ).set(queue=prefixed(OCR))
+        | notify_index_task.s(doc_id=document_id).set(queue=prefixed(OCR))
     )
-    workflow.apply_async(queue=prefixed("ocr"))
+    # I've tried workflow.apply_async(queue=prefixed(OCR))
+    # but not all tasks in the workflow reached OCR queue
+    # See https://stackoverflow.com/questions/14953521/how-to-route-a-chain-of-tasks-to-a-specific-queue-in-celery  # noqa
+    workflow.apply_async()
 
 
 @shared_task()
@@ -139,19 +143,19 @@ def update_db_task(_, **kwargs):
 
     doc_id = kwargs["doc_id"]
     lang = kwargs["lang"]
-    target_doc_ver_id = kwargs["target_doc_ver_id"]
+    target_docver_id = kwargs["target_docver_id"]
     target_page_ids = kwargs["target_page_ids"]
 
     with db_session() as session:
         db.increment_doc_ver(
             session,
             document_id=doc_id,
-            target_docver_uuid=target_doc_ver_id,
-            target_page_uuids=target_page_ids,
+            target_docver_uuid=target_docver_id,
+            target_page_uuids=[tid for tid in target_page_ids],
             lang=lang,
         )
         # these are newly created pages
-        pages = db.get_pages(session, doc_ver_id=target_doc_ver_id)
+        pages = db.get_pages(session, doc_ver_id=target_docver_id)
         streams = []
         for page in pages:
             file_path = plib.page_txt_path(page.id)
@@ -161,7 +165,7 @@ def update_db_task(_, **kwargs):
                 streams.append(io.StringIO(""))
 
         db.update_doc_ver_text(
-            session, doc_ver_id=target_doc_ver_id, streams=streams
+            session, doc_ver_id=target_docver_id, streams=streams
         )
 
 
