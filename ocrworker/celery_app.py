@@ -1,15 +1,14 @@
-import os
 from celery import Celery
 from ocrworker import config, utils
 from celery.signals import setup_logging
 
 
 settings = config.get_settings()
-PREFIX = os.environ.get("PAPERMERGE__MAIN__PREFIX", None)
 
 app = Celery(
     "ocrworker",
     broker=settings.papermerge__redis__url,
+    backend=settings.papermerge__redis__url,
     include=["ocrworker.tasks"],
 )
 
@@ -33,8 +32,9 @@ def config_loggers(*args, **kwags):
 
 
 def prefixed(name: str) -> str:
-    if PREFIX:
-        return f"{PREFIX}_{name}"
+    pref = settings.papermerge__main__prefix
+    if pref:
+        return f"{pref}_{name}"
 
     return name
 

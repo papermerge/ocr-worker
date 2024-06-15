@@ -20,7 +20,7 @@ COMPLETE = "complete"
 PAGE_PDF = "page.pdf"
 
 
-@shared_task()
+@shared_task(name=constants.WORKER_OCR_DOCUMENT)
 def ocr_document_task(document_id: str, lang: str):
     logger.debug(f"Task started, document_id={document_id}, lang={lang}")
 
@@ -37,11 +37,11 @@ def ocr_document_task(document_id: str, lang: str):
     lang = lang.lower()
 
     doc_ver_path = plib.abs_docver_path(doc_ver.id, doc_ver.file_name)
-    _type, encoding = mimetypes.guess_type(doc_ver_path)
+    _type, _ = mimetypes.guess_type(doc_ver_path)
     if _type is None:
         raise ValueError("Could not guess mimetype")
 
-    if encoding not in ("application/pdf", "application/image"):
+    if _type not in ("application/pdf", "application/image"):
         raise ValueError(f"Unsupported format for document: {doc_ver_path}")
 
     per_page_ocr_tasks = [
@@ -72,12 +72,14 @@ def ocr_document_task(document_id: str, lang: str):
         )
         | notify_index_task.s(doc_id=document_id)
     )
-    workflow.apply_async(route_name="ocr")
+    workflow.apply_async(queue=prefixed("ocr"))
 
 
 @shared_task()
 def ocr_page_task(**kwargs):
     """OCR one single page"""
+    logger.debug(f"Task started kwargs={kwargs}")
+
     doc_ver_id = kwargs["doc_ver_id"]
     target_page_id = kwargs["target_page_id"]
     lang = kwargs["lang"]
@@ -112,6 +114,7 @@ def ocr_page_task(**kwargs):
 @shared_task()
 def stitch_pages_task(_, **kwargs):
     logger.debug(f"Stitching pages for args={kwargs}")
+
     doc_ver_id = kwargs["doc_ver_id"]
     target_doc_ver_id = kwargs["target_doc_ver_id"]
     target_page_ids = kwargs["target_page_ids"]
@@ -168,3 +171,11 @@ def notify_index_task(_, **kwargs):
         kwargs={"doc_ids": [doc_id]},
         route_name="i3",
     )
+
+
+def prefixed(name: str) -> str:
+    pref = settings.papermerge__main__prefix
+    if pref:
+        return f"{pref}_{name}"
+
+    return name
