@@ -6,7 +6,7 @@ import ocrmypdf
 from pikepdf import Pdf
 
 
-def run_ocr(
+def run_one_page_ocr(
     file_path: Path,
     output_dir: Path,
     sidecar_dir: Path,

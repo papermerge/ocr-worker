@@ -27,4 +27,19 @@ def get_pdf_page_count(content: io.BytesIO | bytes) -> int:
     return page_count
 
 
-def stitch_pdf(src: list[Path], dst: Path): ...
+def stitch_pdf(srcs: list[Path], dst: Path):
+    """
+    Creates target pdf file by 'stitching' source (one page)
+    pdf files.
+
+    Note that source files are assumed to have only one page.
+    * stitch = combine, sew, put together
+    """
+    target = Pdf.new()
+    for src in srcs:
+        with Pdf.open(src) as f:
+            # source pdf files are assumed to have only one page
+            target.pages.append(f.pages[0])
+
+    target.save(dst)
+    target.close()

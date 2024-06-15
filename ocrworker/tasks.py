@@ -2,12 +2,11 @@ import logging
 import mimetypes
 import uuid
 from pathlib import Path
-from uuid import UUID
 
 from celery import chain, group, shared_task
 
 from ocrworker import config, constants, db, plib, utils
-from ocrworker.ocr import run_ocr
+from ocrworker.ocr import run_one_page_ocr
 
 logger = logging.getLogger(__name__)
 db_session = db.get_db()
@@ -16,9 +15,10 @@ settings = config.get_settings()
 
 STARTED = "started"
 COMPLETE = "complete"
+PAGE_PDF = "page.pdf"
 
 
-@shared_task(acks_late=True, reject_on_worker_lost=True)
+@shared_task()
 def ocr_document_task(document_id, lang):
     logger.debug(f"Task started, document_id={document_id}, lang={lang}")
 
@@ -44,35 +44,43 @@ def ocr_document_task(document_id, lang):
 
     per_page_ocr_tasks = [
         ocr_page_task.s(
-            kwargs={
-                "doc_id": doc_ver.id,
-                "page_number": index + 1,
-                "target_docver_id": target_docver_uuid,
-                "target_page_id": target_page_uuid,
-                "lang": lang,
-                "preview_width": 300,
-            }
+            doc_id=doc_ver.id,
+            doc_ver_id=doc_ver.id,
+            page_number=index + 1,
+            target_docver_id=target_docver_uuid,
+            target_page_id=target_page_uuid,
+            lang=lang,
+            preview_width=300,
         )
         for index, target_page_uuid in enumerate(target_page_uuids)
     ]
     workflow = chain(
         group(per_page_ocr_tasks)
-        | stitch_pages_task.s()
-        | update_db_task.s()
+        | stitch_pages_task.s(
+            doc_ver_id=doc_ver.id,
+            target_docver_id=target_docver_uuid,
+            target_page_ids=target_page_uuids,
+        )
+        | update_db_task.s(
+            doc_id=document_id,
+            doc_ver_id=doc_ver.id,
+            target_docver_id=target_docver_uuid,
+            target_page_ids=target_page_uuids,
+        )
         | notify_index_task.s()
     )
     workflow.apply_async()
 
 
-@shared_task(acks_late=True, reject_on_worker_lost=True)
-def ocr_page_task(
-    doc_ver_id: UUID,
-    page_number: int,
-    target_docver_id: UUID,
-    target_page_id: UUID,
-    lang: str,
-    preview_width: int,
-):
+@shared_task()
+def ocr_page_task(**kwargs):
+    """OCR one single page"""
+    doc_ver_id = kwargs["doc_ver_id"]
+    target_page_id = kwargs["target_page_id"]
+    lang = kwargs["lang"]
+    page_number = kwargs["page_number"]
+    preview_width = kwargs["preview_width"]
+
     with db_session() as session:
         doc_ver = db.get_doc_ver(session, doc_ver_id)
 
@@ -85,9 +93,9 @@ def ocr_page_task(
     if not sidecar_dir.parent.exists():
         sidecar_dir.parent.mkdir(parents=True, exist_ok=True)
 
-    run_ocr(
+    run_one_page_ocr(
         file_path=doc_ver.file_path,
-        output_dir=output_dir / "page.pdf",
+        output_dir=output_dir / PAGE_PDF,
         lang=lang,
         sidecar_dir=sidecar_dir,
         uuid=target_page_id,
@@ -99,29 +107,28 @@ def ocr_page_task(
 
 
 @shared_task()
-def stitch_pages_task(args):
-    logger.debug(f"Stitching pages for args={args}")
-    document_id = args[0][0]
-    doc_ver_id = args[0][2]
+def stitch_pages_task(_, **kwargs):
+    logger.debug(f"Stitching pages for args={kwargs}")
+    doc_ver_id = kwargs["doc_ver_id"]
+    target_doc_ver_id = kwargs["target_doc_ver_id"]
+    target_page_ids = kwargs["target_page_ids"]
     with db_session() as session:
         doc_ver = db.get_doc_ver(session, doc_ver_id)
 
-    doc_ver_path = plib.abs_docver_path(doc_ver_id, doc_ver.file_name)
-    page_paths = [plib.abs_page_path(argset[3]) for argset in args]
-    utils.stitch_pdf(src=page_paths, dst=doc_ver_path)
-
-    return document_id
+    dst = plib.abs_docver_path(target_doc_ver_id, doc_ver.file_name)
+    srcs = [
+        plib.abs_page_path(page_id) / PAGE_PDF for page_id in target_page_ids
+    ]
+    utils.stitch_pdf(srcs=srcs, dst=dst)
 
 
 @shared_task()
-def update_db_task(doc_id):
-    logger.debug(f"Update DB doc_id={doc_id}")
+def update_db_task(_, **kwargs):
+    logger.debug(f"Update DB doc_id={kwargs}")
     # create doc ver target version
     # add its pages (with extracted text)
-    return doc_id
 
 
 @shared_task()
-def notify_index_task(doc_id):
-    logger.debug(f"Update notify index doc_id={doc_id}")
-    return doc_id
+def notify_index_task(_, **kwargs):
+    logger.debug(f"Update notify index doc_id={kwargs}")

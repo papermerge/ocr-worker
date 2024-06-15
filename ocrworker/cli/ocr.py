@@ -3,7 +3,8 @@ from pathlib import Path
 
 import typer
 
-from ocrworker.ocr import run_ocr
+from ocrworker.ocr import run_one_page_ocr
+from ocrworker.utils import stitch_pdf
 
 app = typer.Typer(help="OCR documents")
 
@@ -21,7 +22,7 @@ def ocrmypdf_cmd(
     target_page_id = uuid.uuid4()
     print(f"Target page ID={target_page_id}")
 
-    run_ocr(
+    run_one_page_ocr(
         file_path=file_path,
         output_dir=output_dir,
         sidecar_dir=sidecar_dir,
@@ -34,3 +35,8 @@ def ocrmypdf_cmd(
 
 @app.command(name="ocr")
 def ocr_cmd(): ...
+
+
+@app.command(name="stitch")
+def stitch_cmd(dst: Path, srcs: list[Path]):
+    stitch_pdf(srcs=srcs, dst=dst)
