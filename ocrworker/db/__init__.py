@@ -9,7 +9,7 @@ from .doc_ver import (
     increment_doc_ver,
     update_doc_ver_text,
 )
-from .engine import engine
+from .engine import get_engine
 from .session import get_db
 
 __all__ = [
@@ -23,5 +23,5 @@ __all__ = [
     "get_page",
     "get_db",
     "Base",
-    "engine",
+    "get_engine",
 ]

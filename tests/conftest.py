@@ -4,14 +4,16 @@ import uuid
 import pytest
 
 from ocrworker import db
-from ocrworker.db import Base, engine
+from ocrworker.db import Base, get_engine
 from ocrworker.db.models import Document, DocumentVersion, Page, User
 
 
 @pytest.fixture(scope="function")
 def session():
+    url = "sqlite:///test_db.sqlite3"
+    engine = get_engine(url)
     Base.metadata.create_all(engine)
-    db_session = db.get_db()
+    db_session = db.get_db(url=url)
     try:
         with db_session() as se:
             yield se
