@@ -120,7 +120,7 @@ def upload_file(rel_file_path: Path):
 
 
 @skip_if_s3_disabled
-def download_pages(target_page_ids: list[str]):
+def download_pdf_pages(target_page_ids: list[str]):
     """Downloads document pages from S3
 
     Will download only pages which are not found locally
@@ -134,17 +134,17 @@ def download_pages(target_page_ids: list[str]):
             to_download.append(page_id)
 
     logger.debug(f"Queued for download from S3 {to_download}")
-    download_many_pages(to_download)
+    download_many_pdf_pages(to_download)
 
 
-def download_many_pages(page_ids: list[str]) -> int:
+def download_many_pdf_pages(page_ids: list[str]) -> int:
     return asyncio.run(supervisor(page_ids))
 
 
 async def supervisor(page_ids: list[str]) -> int:
     async with AsyncClient() as client:
         to_download = [
-            download_one_page(client, page_id) for page_id in page_ids
+            download_one_pdf_page(client, page_id) for page_id in page_ids
         ]
 
         res = await asyncio.gather(*to_download)
@@ -152,13 +152,13 @@ async def supervisor(page_ids: list[str]) -> int:
     return len(res)
 
 
-async def download_one_page(client: AsyncClient, page_id: str):
-    page = await get_page(client, page_id)
-    file_path = plib.abs_page_path(page_id)
-    save_page(page, file_path)
+async def download_one_pdf_page(client: AsyncClient, page_id: str):
+    page_data = await get_pdf_page(client, page_id)
+    file_path = plib.abs_page_path(page_id) / const.PAGE_PDF
+    file_path.write_bytes(page_data)
 
 
-async def get_page(client: AsyncClient, page_id: str) -> bytes:
+async def get_pdf_page(client: AsyncClient, page_id: str) -> bytes:
     s3_client = get_client()
     key = get_prefix() / plib.page_path(page_id) / const.PAGE_PDF
     request_url = s3_client.generate_presigned_url(
@@ -166,10 +166,6 @@ async def get_page(client: AsyncClient, page_id: str) -> bytes:
     )
     resp = await client.get(request_url, follow_redirects=True)
     return resp.read()
-
-
-def save_page(data: bytes, file_path: Path) -> None:
-    file_path.write_bytes(data)
 
 
 def get_bucket_name():

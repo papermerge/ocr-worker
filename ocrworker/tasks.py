@@ -132,7 +132,7 @@ def stitch_pages_task(_, **kwargs):
         plib.abs_page_path(page_id) / const.PAGE_PDF
         for page_id in target_page_ids
     ]
-    s3.download_pages(target_page_ids)
+    s3.download_pdf_pages(target_page_ids)
     utils.stitch_pdf(srcs=srcs, dst=dst)
     # same as dst, but relative
     s3.upload_file(plib.docver_path(target_docver_id, doc_ver.file_name))
