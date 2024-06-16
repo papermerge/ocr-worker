@@ -113,8 +113,8 @@ def ocr_page_task(**kwargs):
         page_number=page_number,
         preview_width=preview_width,
     )
-    # output_dir / PAGE_PDF made relative
-    s3.upload_file(plib.page_path(target_page_id) / const.PAGE_PDF)
+    # upload entire page dir (*.pdf file, *.svg, *.txt etc)
+    s3.upload_page_dir(target_page_id)
 
 
 @shared_task()

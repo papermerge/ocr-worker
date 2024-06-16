@@ -1,6 +1,8 @@
 import uuid
 import logging
 import boto3
+import asyncio
+from httpx import AsyncClient
 
 from pathlib import Path
 from botocore.client import BaseClient
@@ -70,6 +72,23 @@ def download_docver(docver_id: uuid.UUID, file_name: str):
 
 
 @skip_if_s3_disabled
+def upload_page_dir(page_id: uuid.UUID) -> None:
+    """Uploads to S3 all content of the page folder
+
+    If page was OCRed it will contain:
+    - *.hocr
+    - *.jpg
+    - *.svg
+    - *.pdf
+    """
+    page_dir = plib.abs_page_path(page_id).glob(".*")
+    for path in page_dir:
+        if path.is_file():
+            rel_file_path = plib.page_path(page_id) / path.name
+            upload_file(rel_file_path)
+
+
+@skip_if_s3_disabled
 def upload_file(rel_file_path: Path):
     """Uploads to S3 file specified by relative path
 
@@ -115,6 +134,42 @@ def download_pages(target_page_ids: list[str]):
             to_download.append(page_id)
 
     logger.debug(f"Queued for download from S3 {to_download}")
+    download_many_pages(to_download)
+
+
+def download_many_pages(page_ids: list[str]) -> int:
+    return asyncio.run(supervisor(page_ids))
+
+
+async def supervisor(page_ids: list[str]) -> int:
+    async with AsyncClient() as client:
+        to_download = [
+            download_one_page(client, page_id) for page_id in page_ids
+        ]
+
+        res = await asyncio.gather(*to_download)
+
+    return len(res)
+
+
+async def download_one_page(client: AsyncClient, page_id: str):
+    page = await get_page(client, page_id)
+    file_path = plib.abs_page_path(page_id)
+    save_page(page, file_path)
+
+
+async def get_page(client: AsyncClient, page_id: str) -> bytes:
+    s3_client = get_client()
+    key = get_prefix() / plib.page_path(page_id) / const.PAGE_PDF
+    request_url = s3_client.generate_presigned_url(
+        "get_object", {"Bucket": get_bucket_name(), "Key": key}, ExpiresIn=30
+    )
+    resp = await client.get(request_url, follow_redirects=True)
+    return resp.read()
+
+
+def save_page(data: bytes, file_path: Path) -> None:
+    file_path.write_bytes(data)
 
 
 def get_bucket_name():
