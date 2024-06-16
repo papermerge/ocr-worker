@@ -1,13 +1,14 @@
 import io
 import logging
-import mimetypes
 import uuid
+import mimetypes
 from pathlib import Path
 from celery.app import default_app as celery_app
 
 from celery import chain, group, shared_task
 
-from ocrworker import config, constants, db, plib, utils
+from ocrworker import config, db, plib, utils, s3
+from ocrworker import constants as const
 from ocrworker.ocr import run_one_page_ocr
 
 logger = logging.getLogger(__name__)
@@ -17,11 +18,9 @@ settings = config.get_settings()
 
 STARTED = "started"
 COMPLETE = "complete"
-PAGE_PDF = "page.pdf"
-OCR = "ocr"
 
 
-@shared_task(name=constants.WORKER_OCR_DOCUMENT)
+@shared_task(name=const.WORKER_OCR_DOCUMENT)
 def ocr_document_task(document_id: str, lang: str):
     logger.debug(f"Task started, document_id={document_id}, lang={lang}")
 
@@ -38,9 +37,8 @@ def ocr_document_task(document_id: str, lang: str):
     lang = lang.lower()
 
     doc_ver_path = plib.abs_docver_path(doc_ver.id, doc_ver.file_name)
+    s3.download_docver(doc_ver.id, doc_ver.file_name)
     _type, _ = mimetypes.guess_type(doc_ver_path)
-    if _type is None:
-        raise ValueError("Could not guess mimetype")
 
     if _type not in ("application/pdf", "application/image"):
         raise ValueError(f"Unsupported format for document: {doc_ver_path}")
@@ -54,7 +52,7 @@ def ocr_document_task(document_id: str, lang: str):
             target_page_id=target_page_uuid,
             lang=lang,
             preview_width=300,
-        ).set(queue=prefixed(OCR))
+        ).set(queue=prefixed(const.OCR))
         for index, target_page_uuid in enumerate(target_page_uuids)
     ]
     workflow = chain(
@@ -63,15 +61,15 @@ def ocr_document_task(document_id: str, lang: str):
             doc_ver_id=doc_ver.id,
             target_docver_id=target_docver_uuid,
             target_page_ids=target_page_uuids,
-        ).set(queue=prefixed(OCR))
+        ).set(queue=prefixed(const.OCR))
         | update_db_task.s(
             doc_id=uuid.UUID(document_id),
             doc_ver_id=doc_ver.id,
             lang=lang,
             target_docver_id=target_docver_uuid,
             target_page_ids=target_page_uuids,
-        ).set(queue=prefixed(OCR))
-        | notify_index_task.s(doc_id=document_id).set(queue=prefixed(OCR))
+        ).set(queue=prefixed(const.OCR))
+        | notify_index_task.s(doc_id=document_id).set(queue=prefixed(const.OCR))
     )
     # I've tried workflow.apply_async(queue=prefixed(OCR))
     # but not all tasks in the workflow reached OCR queue
@@ -94,7 +92,7 @@ def ocr_page_task(**kwargs):
         doc_ver = db.get_doc_ver(session, doc_ver_id)
 
     sidecar_dir = Path(
-        settings.papermerge__main__media_root, constants.OCR, constants.PAGES
+        settings.papermerge__main__media_root, const.OCR, const.PAGES
     )
 
     output_dir = plib.abs_page_path(target_page_id)
@@ -105,15 +103,18 @@ def ocr_page_task(**kwargs):
     if not sidecar_dir.parent.exists():
         sidecar_dir.parent.mkdir(parents=True, exist_ok=True)
 
+    s3.download_docver(doc_ver.id, doc_ver.file_name)
     run_one_page_ocr(
         file_path=plib.abs_docver_path(doc_ver.id, doc_ver.file_name),
-        output_dir=output_dir / PAGE_PDF,
+        output_dir=output_dir / const.PAGE_PDF,
         lang=lang,
         sidecar_dir=sidecar_dir,
         uuid=target_page_id,
         page_number=page_number,
         preview_width=preview_width,
     )
+    # output_dir / PAGE_PDF made relative
+    s3.upload_file(plib.page_path(target_page_id) / const.PAGE_PDF)
 
 
 @shared_task()
@@ -128,9 +129,13 @@ def stitch_pages_task(_, **kwargs):
 
     dst = plib.abs_docver_path(target_docver_id, doc_ver.file_name)
     srcs = [
-        plib.abs_page_path(page_id) / PAGE_PDF for page_id in target_page_ids
+        plib.abs_page_path(page_id) / const.PAGE_PDF
+        for page_id in target_page_ids
     ]
+    s3.download_pages(target_page_ids)
     utils.stitch_pdf(srcs=srcs, dst=dst)
+    # same as dst, but relative
+    s3.upload_file(plib.docver_path(target_docver_id, doc_ver.file_name))
 
 
 @shared_task()
@@ -172,7 +177,7 @@ def notify_index_task(_, **kwargs):
     doc_id = kwargs["doc_id"]
 
     celery_app.send_task(
-        constants.INDEX_ADD_DOCS,
+        const.INDEX_ADD_DOCS,
         kwargs={"doc_ids": [doc_id]},
         route_name="i3",
     )
