@@ -24,7 +24,7 @@ httpx = "^0.27.0"
 ocr = "ocrworker.cli.ocr:app"
 
 [tool.taskipy.tasks]
-worker = "celery -A ocrworker.celery_app worker -E -c 8 -Q ocr"
+worker = "celery -A ocrworker.celery_app worker -E -c 8 -Q dev-coco_ocr"
 
 
 [tool.poetry.group.dev.dependencies]

@@ -12,6 +12,8 @@ app = Celery(
     include=["ocrworker.tasks"],
 )
 
+app.conf.update(broker_connection_retry_on_startup=True)
+
 app.autodiscover_tasks()
 
 

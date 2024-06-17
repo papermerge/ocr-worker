@@ -68,7 +68,8 @@ def download_docver(docver_id: uuid.UUID, file_name: str):
             raise ValueError(f"S3 key {keyname} not found")
 
     client = get_client()
-    client.download_file(get_bucket_name(), keyname, str(doc_ver_path))
+    doc_ver_path.parent.mkdir(parents=True, exist_ok=True)
+    client.download_file(get_bucket_name(), str(keyname), str(doc_ver_path))
 
 
 @skip_if_s3_disabled
@@ -81,7 +82,7 @@ def upload_page_dir(page_id: uuid.UUID) -> None:
     - *.svg
     - *.pdf
     """
-    page_dir = plib.abs_page_path(page_id).glob(".*")
+    page_dir = plib.abs_page_path(page_id).glob("*")
     for path in page_dir:
         if path.is_file():
             rel_file_path = plib.page_path(page_id) / path.name
