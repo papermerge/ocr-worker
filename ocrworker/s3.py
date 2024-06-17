@@ -121,6 +121,21 @@ def upload_file(rel_file_path: Path):
 
 
 @skip_if_s3_disabled
+def download_page_txt(page_id: uuid.UUID):
+    """Download document page txt from S3"""
+    abs_path = plib.abs_page_txt_path(page_id)
+    if abs_path.exists():
+        return
+
+    keyname = get_prefix() / plib.page_txt_path(page_id)
+    if not obj_exists(keyname):
+        raise ValueError(f"{keyname} not found on S3")
+
+    s3_client = get_client()
+    s3_client.download_file(get_bucket_name(), str(keyname), str(abs_path))
+
+
+@skip_if_s3_disabled
 def download_pdf_pages(target_page_ids: list[str]):
     """Downloads document pages from S3
 

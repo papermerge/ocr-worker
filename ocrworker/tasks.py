@@ -159,10 +159,14 @@ def update_db_task(_, **kwargs):
         pages = db.get_pages(session, doc_ver_id=target_docver_id)
         streams = []
         for page in pages:
-            file_path = plib.page_txt_path(page.id)
-            if file_path.exists():
-                streams.append(open(file_path))
+            abs_file_path = plib.abs_page_txt_path(page.id)
+            s3.download_page_txt(page.id)
+            if abs_file_path.exists():
+                streams.append(open(abs_file_path))
             else:
+                logger.debug(
+                    f"{abs_file_path} not found. Page text set to empty string"
+                )
                 streams.append(io.StringIO(""))
 
         db.update_doc_ver_text(
