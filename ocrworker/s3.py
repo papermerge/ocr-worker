@@ -9,6 +9,7 @@ from botocore.client import BaseClient
 from botocore.exceptions import ClientError
 
 from ocrworker import config, plib
+from ocrworker import exceptions
 from ocrworker import constants as const
 
 settings = config.get_settings()
@@ -65,7 +66,7 @@ def download_docver(docver_id: uuid.UUID, file_name: str):
     if not doc_ver_path.exists():
         if not obj_exists(str(keyname)):
             # no local version + no s3 version
-            raise ValueError(f"S3 key {keyname} not found")
+            raise exceptions.S3DocumentNotFound(f"S3 key {keyname} not found")
 
     client = get_client()
     doc_ver_path.parent.mkdir(parents=True, exist_ok=True)

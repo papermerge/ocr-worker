@@ -7,7 +7,7 @@ from celery.app import default_app as celery_app
 
 from celery import chain, group, shared_task
 
-from ocrworker import config, db, plib, utils, s3
+from ocrworker import config, db, plib, utils, s3, exceptions
 from ocrworker import constants as const
 from ocrworker.ocr import run_one_page_ocr
 
@@ -20,8 +20,19 @@ STARTED = "started"
 COMPLETE = "complete"
 
 
-@shared_task(name=const.WORKER_OCR_DOCUMENT)
+@shared_task(
+    name=const.WORKER_OCR_DOCUMENT,
+    autoretry_for=(exceptions.S3DocumentNotFound,),
+    # Wait for 10 seconds before starting each new try. At most retry 6 times.
+    retry_kwargs={"max_retries": 6, "countdown": 10},
+)
 def ocr_document_task(document_id: str, lang: str):
+    """OCR Document task with automatic retry
+
+    This task may start before document being uploaded to S3.
+    If document is not found on S3, `ocrworker.exceptions.S3DocumentNotFound`
+    which causes task to be restarted after a delay of 10 seconds.
+    """
     logger.debug(f"Task started, document_id={document_id}, lang={lang}")
 
     with db_session() as session:
