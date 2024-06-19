@@ -131,7 +131,7 @@ def download_page_txt(page_id: uuid.UUID):
         return
 
     keyname = get_prefix() / plib.page_txt_path(page_id)
-    if not obj_exists(keyname):
+    if not obj_exists(str(keyname)):
         raise ValueError(f"{keyname} not found on S3")
 
     s3_client = get_client()
