@@ -1,6 +1,7 @@
 import uuid
 import logging
 import boto3
+from botocore.client import Config
 import asyncio
 from httpx import AsyncClient
 
@@ -33,7 +34,8 @@ def get_client() -> BaseClient:
         aws_secret_access_key=settings.aws_secret_access_key,
         region_name=settings.aws_region_name,
     )
-    client = session.client("s3")
+    # https://stackoverflow.com/questions/26533245/the-authorization-mechanism-you-have-provided-is-not-supported-please-use-aws4  # noqa
+    client = session.client("s3", config=Config(signature_version="s3v4"))
 
     return client
 
