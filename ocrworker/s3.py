@@ -179,7 +179,9 @@ async def get_pdf_page(client: AsyncClient, page_id: str) -> bytes:
     s3_client = get_client()
     key = get_prefix() / plib.page_path(page_id) / const.PAGE_PDF
     request_url = s3_client.generate_presigned_url(
-        "get_object", {"Bucket": get_bucket_name(), "Key": key}, ExpiresIn=30
+        "get_object",
+        {"Bucket": get_bucket_name(), "Key": str(key)},
+        ExpiresIn=30,
     )
     resp = await client.get(request_url, follow_redirects=True)
     return resp.read()
