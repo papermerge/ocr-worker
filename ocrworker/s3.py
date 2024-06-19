@@ -172,6 +172,7 @@ async def supervisor(page_ids: list[str]) -> int:
 async def download_one_pdf_page(client: AsyncClient, page_id: str):
     page_data = await get_pdf_page(client, page_id)
     file_path = plib.abs_page_path(page_id) / const.PAGE_PDF
+    file_path.parent.mkdir(parents=True, exist_ok=True)
     file_path.write_bytes(page_data)
 
 
