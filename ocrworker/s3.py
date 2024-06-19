@@ -135,6 +135,7 @@ def download_page_txt(page_id: uuid.UUID):
         raise ValueError(f"{keyname} not found on S3")
 
     s3_client = get_client()
+    abs_path.parent.mkdir(parents=True, exist_ok=True)
     s3_client.download_file(get_bucket_name(), str(keyname), str(abs_path))
 
 
