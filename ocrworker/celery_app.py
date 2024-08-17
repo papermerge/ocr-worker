@@ -36,6 +36,7 @@ def prefixed(name: str) -> str:
 app.conf.task_routes = {
     "i3": {"queue": prefixed("i3")},
     "ocr": {"queue": prefixed("ocr")},
+    "s3preview": {"queue": prefixed("s3preview")},
 }
 
 
