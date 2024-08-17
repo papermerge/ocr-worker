@@ -1,9 +1,11 @@
+import logging
 from celery import Celery
 from ocrworker import config, utils
 from celery.signals import setup_logging
 
 
 settings = config.get_settings()
+logger = logging.getLogger(__name__)
 
 app = Celery(
     "ocrworker",

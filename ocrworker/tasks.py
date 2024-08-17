@@ -80,6 +80,7 @@ def ocr_document_task(document_id: str, lang: str):
             target_docver_id=target_docver_uuid,
             target_page_ids=target_page_uuids,
         ).set(queue=prefixed(const.OCR))
+        | generate_preview.s(doc_id=document_id).set(queue=prefixed(const.OCR))
         | notify_index_task.s(doc_id=document_id).set(queue=prefixed(const.OCR))
     )
     # I've tried workflow.apply_async(queue=prefixed(OCR))
@@ -195,6 +196,19 @@ def notify_index_task(_, **kwargs):
         const.INDEX_ADD_DOCS,
         kwargs={"doc_ids": [doc_id]},
         route_name="i3",
+    )
+
+
+@shared_task()
+def generate_preview(_, **kwargs):
+    logger.debug(f"Generate thumbnail/page previews for doc_id={kwargs}")
+
+    doc_id = kwargs["doc_id"]
+
+    celery_app.send_task(
+        const.S3_WORKER_GENERATE_PREVIEW,
+        kwargs={"doc_id": doc_id},
+        route_name="s3preview",
     )
 
 
