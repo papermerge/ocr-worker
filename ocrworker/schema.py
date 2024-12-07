@@ -23,8 +23,8 @@ class Page(BaseModel):
     id: UUID
     number: int
     document_version_id: UUID
-    lang: str = "en"
-    text: str = ""
+    lang: str = "deu"
+    text: str | None = None
     page_count: int
     # Config
     model_config = ConfigDict(from_attributes=True)

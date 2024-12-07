@@ -21,7 +21,7 @@ COPY poetry.lock pyproject.toml README.md LICENSE /app/
 
 RUN pip install --upgrade poetry && \
     python -m venv ${VIRTUAL_ENV} && \
-    poetry install -E pgsql -v
+    poetry install -E pg -v
 
 COPY ocrworker /app/ocrworker/
 

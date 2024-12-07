@@ -1,27 +1,29 @@
-from functools import lru_cache
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, Engine
 from sqlalchemy.pool import NullPool
+from sqlalchemy.orm import sessionmaker
 
 from ocrworker.config import get_settings
 
 
-@lru_cache()
-def get_engine(url: str | None = None):
-    settings = get_settings()
+settings = get_settings()
 
-    if url is None:
-        SQLALCHEMY_DATABASE_URL = settings.papermerge__database__url
-    else:
-        SQLALCHEMY_DATABASE_URL = url
 
-    connect_args = {}
+SQLALCHEMY_DATABASE_URL = settings.papermerge__database__url
 
-    if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
-        # sqlite specific connection args
-        connect_args = {"check_same_thread": False}
+connect_args = {}
 
-    return create_engine(
-        SQLALCHEMY_DATABASE_URL,
-        connect_args=connect_args,
-        poolclass=NullPool,
-    )
+if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
+    # sqlite specific connection args
+    connect_args = {"check_same_thread": False}
+
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL,
+    connect_args=connect_args,
+    poolclass=NullPool,
+)
+
+Session = sessionmaker(engine, expire_on_commit=False)
+
+
+def get_engine() -> Engine:
+    return engine
