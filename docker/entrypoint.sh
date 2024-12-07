@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 CMD="$1"
 
@@ -8,7 +8,6 @@ if [ -z $CMD ]; then
 fi
 
 exec_worker() {
-  export VIRTUAL_ENV=/app/venv
   cd /app && poetry run celery -A ocrworker.celery_app worker ${OCR_WORKER_ARGS}
 }
 

@@ -1,32 +1,30 @@
-FROM python:3.12-slim-bookworm
+FROM python:3.13-alpine
 
 WORKDIR /app
 ENV VIRTUAL_ENV=/app/venv
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    tesseract-ocr \
-    tesseract-ocr-deu \
-    tesseract-ocr-spa \
-    tesseract-ocr-ron \
+RUN apk update && apk add linux-headers \
     python3-dev \
+    gcc \
+    libc-dev \
+    libpq-dev \
+    tesseract-ocr \
+    tesseract-ocr-data-deu \
+    tesseract-ocr-data-spa \
+    tesseract-ocr-data-ron \
     libpq-dev \
     imagemagick \
-    gcc \
     ghostscript \
-    poppler-utils &&\
-    rm -rf /var/lib/apt/lists/*
+    poppler-utils
 
 COPY poetry.lock pyproject.toml README.md LICENSE /app/
 
 RUN pip install --upgrade poetry && \
-    python -m venv ${VIRTUAL_ENV} && \
     poetry install -E pg -v
 
 COPY ocrworker /app/ocrworker/
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-COPY docker/run.bash /run.bash
-RUN chmod +x /run.bash
-
-ENTRYPOINT ["/run.bash"]
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["worker"]
