@@ -8,7 +8,7 @@ if [ -z $CMD ]; then
 fi
 
 exec_worker() {
-  cd /app && poetry run celery -A ocrworker.celery_app worker ${OCR_WORKER_ARGS}
+  exec poetry run celery -A ocrworker.celery_app worker ${OCR_WORKER_ARGS}
 }
 
 case $CMD in
