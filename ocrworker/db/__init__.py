@@ -1,5 +1,5 @@
 from .base import Base
-from .doc_ver import (
+from .api import (
     get_doc,
     get_doc_ver,
     get_docs,
@@ -10,7 +10,6 @@ from .doc_ver import (
     update_doc_ver_text,
 )
 from .engine import get_engine
-from .session import get_db
 
 __all__ = [
     "get_last_version",
@@ -21,7 +20,6 @@ __all__ = [
     "get_doc",
     "get_pages",
     "get_page",
-    "get_db",
     "Base",
     "get_engine",
 ]

@@ -12,7 +12,7 @@ CType = Literal["document", "folder"]
 
 
 class Node(Base):
-    __tablename__ = "core_basetreenode"
+    __tablename__ = "nodes"
 
     id: Mapped[UUID] = mapped_column(
         primary_key=True, insert_default=uuid.uuid4()
@@ -21,7 +21,7 @@ class Node(Base):
     ctype: Mapped[CType] = mapped_column(insert_default="document")
     lang: Mapped[str] = mapped_column(String(8))
     tags: list[str] = []
-    user_id: Mapped[UUID] = mapped_column(ForeignKey("core_user.id"))
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(insert_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         insert_default=func.now(), onupdate=func.now()
@@ -29,11 +29,11 @@ class Node(Base):
 
 
 class Document(Base):
-    __tablename__ = "core_document"
+    __tablename__ = "documents"
 
     id: Mapped[UUID] = mapped_column(
-        "basetreenode_ptr_id",
-        ForeignKey("core_basetreenode.id"),
+        "node_id",
+        ForeignKey("nodes.id"),
         primary_key=True,
         insert_default=uuid.uuid4(),
     )
@@ -41,7 +41,7 @@ class Document(Base):
     title: Mapped[str] = mapped_column(String(200))
     # actually `lang` attribute should be part of the document
     lang: Mapped[str] = mapped_column(String(8))
-    user_id: Mapped[UUID] = mapped_column(ForeignKey("core_user.id"))
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(insert_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         insert_default=func.now(), onupdate=func.now()
@@ -49,7 +49,7 @@ class Document(Base):
 
 
 class DocumentVersion(Base):
-    __tablename__ = "core_documentversion"
+    __tablename__ = "document_versions"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
     number: Mapped[int]
@@ -59,32 +59,25 @@ class DocumentVersion(Base):
     page_count: Mapped[int]
     text: Mapped[str] = mapped_column(insert_default="")
     short_description: Mapped[str] = mapped_column(insert_default="")
-    document_id: Mapped[UUID] = mapped_column(
-        ForeignKey("core_document.basetreenode_ptr_id")
-    )
+    document_id: Mapped[UUID] = mapped_column(ForeignKey("documents.node_id"))
 
 
 class Page(Base):
-    __tablename__ = "core_page"
+    __tablename__ = "pages"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
     number: Mapped[int]
     lang: Mapped[str] = mapped_column(insert_default="en")
     text: Mapped[str] = mapped_column(insert_default="")
     page_count: Mapped[int]
-    norm_doc_title: Mapped[str] = mapped_column(insert_default="")
-    norm_folder_title: Mapped[str] = mapped_column(insert_default="")
-    norm_breadcrump: Mapped[str] = mapped_column(insert_default="")
-    norm_text: Mapped[str] = mapped_column(insert_default="")
-    image: Mapped[str] = mapped_column(insert_default="")
 
     document_version_id: Mapped[UUID] = mapped_column(
-        ForeignKey("core_documentversion.id")
+        ForeignKey("document_versions.id")
     )
 
 
 class User(Base):
-    __tablename__ = "core_user"
+    __tablename__ = "users"
 
     id: Mapped[UUID] = mapped_column(
         primary_key=True, insert_default=uuid.uuid4()

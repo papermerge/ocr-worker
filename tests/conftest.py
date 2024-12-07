@@ -3,37 +3,33 @@ import uuid
 
 import pytest
 
-from ocrworker import db
-from ocrworker.db import Base, get_engine
-from ocrworker.db.models import Document, DocumentVersion, Page, User
+from ocrworker.db.engine import engine, Session
+from ocrworker.db import Base
+from ocrworker.db.orm import Document, DocumentVersion, Page, User
 
 
 @pytest.fixture(scope="function")
-def session():
-    url = "sqlite:///test_db.sqlite3"
-    engine = get_engine(url)
-    Base.metadata.create_all(engine)
-    db_session = db.get_db(url=url)
-    try:
-        with db_session() as se:
-            yield se
-    finally:
-        Base.metadata.drop_all(engine)
+def db_session():
+    Base.metadata.create_all(engine, checkfirst=False)
+    with Session() as session:
+        yield session
+
+    Base.metadata.drop_all(engine, checkfirst=False)
 
 
 @pytest.fixture(scope="function")
-def socrates(session):
+def socrates(db_session):
     user = User(
         username="socrates", password="truth", email="socrates@gmail.com"
     )
-    session.add(user)
-    session.commit()
+    db_session.add(user)
+    db_session.commit()
 
     return user
 
 
 @pytest.fixture(scope="function")
-def doc_factory(session, socrates):
+def doc_factory(db_session, socrates):
 
     def _create_doc(
         title: str, file_name: str = "receipt_001.pdf", page_count: int = 2
@@ -44,27 +40,29 @@ def doc_factory(session, socrates):
             id=doc_id,
             ctype="document",
             title=title,
-            lang="en",
+            lang="deu",
             user_id=socrates.id,
         )
         doc_ver = DocumentVersion(
             id=doc_ver_id,
             number=1,
             file_name=file_name,
+            lang="deu",
             document_id=doc_id,
             page_count=page_count,
         )
 
-        session.add_all([doc, doc_ver])
+        db_session.add_all([doc, doc_ver])
         for page_number in range(1, page_count + 1):
             page = Page(
                 id=uuid.uuid4(),
                 number=page_number,
+                page_count=page_count,
                 document_version_id=doc_ver_id,
             )
-            session.add(page)
+            db_session.add(page)
 
-        session.commit()
+        db_session.commit()
 
         return doc
 
@@ -72,33 +70,40 @@ def doc_factory(session, socrates):
 
 
 @pytest.fixture(scope="function")
-def page_factory(session, socrates):
+def page_factory(db_session, socrates):
 
-    def _create_page(title: str, text: str = "", page_number: int = 1):
+    def _create_page(
+        title: str, text: str = "", page_number: int = 1, page_count: int = 3
+    ):
         doc_id = uuid.uuid4()
         doc_ver_id = uuid.uuid4()
         doc = Document(
             id=doc_id,
             ctype="document",
             title=title,
-            lang="en",
+            lang="deu",
             user_id=socrates.id,
         )
         doc_ver = DocumentVersion(
-            id=doc_ver_id, number=1, file_name=title, document_id=doc_id
+            id=doc_ver_id,
+            number=1,
+            file_name=title,
+            document_id=doc_id,
+            lang="deu",
         )
 
-        session.add_all([doc, doc_ver])
+        db_session.add_all([doc, doc_ver])
 
         page = Page(
             id=uuid.uuid4(),
             number=page_number,
             text=text,
             document_version_id=doc_ver_id,
+            page_count=page_count,
         )
-        session.add(page)
+        db_session.add(page)
 
-        session.commit()
+        db_session.commit()
 
         return page
 
@@ -106,7 +111,7 @@ def page_factory(session, socrates):
 
 
 @pytest.fixture(scope="function")
-def doc_ver_factory(session, socrates):
+def doc_ver_factory(db_session, socrates):
 
     def _create_doc_ver(
         title: str,
@@ -120,7 +125,7 @@ def doc_ver_factory(session, socrates):
             id=doc_id,
             ctype="document",
             title=title,
-            lang="en",
+            lang="deu",
             user_id=socrates.id,
         )
         doc_ver = DocumentVersion(
@@ -128,10 +133,11 @@ def doc_ver_factory(session, socrates):
             number=1,
             file_name=file_name,
             document_id=doc_id,
+            lang="deu",
             page_count=page_count,
         )
 
-        session.add_all([doc, doc_ver])
+        db_session.add_all([doc, doc_ver])
         if streams:
             if len(streams) != page_count:
                 raise ValueError("Streams count should be same as page count")
@@ -141,19 +147,21 @@ def doc_ver_factory(session, socrates):
                     id=uuid.uuid4(),
                     number=page_number,
                     document_version_id=doc_ver_id,
+                    page_count=page_count,
                     text=stream.read(),
                 )
-                session.add(page)
+                db_session.add(page)
         else:
             for page_number in range(1, page_count + 1):
                 page = Page(
                     id=uuid.uuid4(),
                     number=page_number,
+                    page_count=page_count,
                     document_version_id=doc_ver_id,
                 )
-                session.add(page)
+                db_session.add(page)
 
-        session.commit()
+        db_session.commit()
 
         return doc_ver
 

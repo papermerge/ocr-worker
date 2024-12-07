@@ -8,11 +8,11 @@ from celery.app import default_app as celery_app
 from celery import chain, group, shared_task
 
 from ocrworker import config, db, plib, utils, s3, exceptions
+from ocrworker.db.engine import Session
 from ocrworker import constants as const
 from ocrworker.ocr import run_one_page_ocr
 
 logger = logging.getLogger(__name__)
-db_session = db.get_db()
 
 settings = config.get_settings()
 
@@ -35,9 +35,9 @@ def ocr_document_task(document_id: str, lang: str):
     """
     logger.debug(f"Task started, document_id={document_id}, lang={lang}")
 
-    with db_session() as session:
-        doc_ver = db.get_last_version(session, doc_id=uuid.UUID(document_id))
-        pages = db.get_pages(session, doc_ver_id=doc_ver.id)
+    with Session() as db_session:
+        doc_ver = db.get_last_version(db_session, doc_id=uuid.UUID(document_id))
+        pages = db.get_pages(db_session, doc_ver_id=doc_ver.id)
 
     target_docver_uuid = uuid.uuid4()
     target_page_uuids = [uuid.uuid4() for _ in range(len(pages))]
@@ -100,8 +100,8 @@ def ocr_page_task(**kwargs):
     page_number = kwargs["page_number"]
     preview_width = kwargs["preview_width"]
 
-    with db_session() as session:
-        doc_ver = db.get_doc_ver(session, doc_ver_id)
+    with Session() as db_session:
+        doc_ver = db.get_doc_ver(db_session, doc_ver_id)
 
     sidecar_dir = Path(
         settings.papermerge__main__media_root, const.OCR, const.PAGES
@@ -136,8 +136,8 @@ def stitch_pages_task(_, **kwargs):
     doc_ver_id = kwargs["doc_ver_id"]
     target_docver_id = kwargs["target_docver_id"]
     target_page_ids = kwargs["target_page_ids"]
-    with db_session() as session:
-        doc_ver = db.get_doc_ver(session, doc_ver_id)
+    with Session() as db_session:
+        doc_ver = db.get_doc_ver(db_session, doc_ver_id)
 
     dst = plib.abs_docver_path(target_docver_id, doc_ver.file_name)
     srcs = [
@@ -159,16 +159,16 @@ def update_db_task(_, **kwargs):
     target_docver_id = kwargs["target_docver_id"]
     target_page_ids = kwargs["target_page_ids"]
 
-    with db_session() as session:
+    with Session() as db_session:
         db.increment_doc_ver(
-            session,
+            db_session,
             document_id=doc_id,
             target_docver_uuid=target_docver_id,
             target_page_uuids=[tid for tid in target_page_ids],
             lang=lang,
         )
         # these are newly created pages
-        pages = db.get_pages(session, doc_ver_id=target_docver_id)
+        pages = db.get_pages(db_session, doc_ver_id=target_docver_id)
         streams = []
         for page in pages:
             abs_file_path = plib.abs_page_txt_path(page.id)
@@ -182,7 +182,7 @@ def update_db_task(_, **kwargs):
                 streams.append(io.StringIO(""))
 
         db.update_doc_ver_text(
-            session, doc_ver_id=target_docver_id, streams=streams
+            db_session, doc_ver_id=target_docver_id, streams=streams
         )
 
 
