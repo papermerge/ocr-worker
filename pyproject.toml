@@ -32,7 +32,7 @@ databases = ["mysqlclient", "psycopg2"]
 ocr = "ocrworker.cli.ocr:app"
 
 [tool.taskipy.tasks]
-worker = "celery -A ocrworker.celery_app worker -E -c 8 -Q demo_ocr"
+worker = "celery -A ocrworker.celery_app worker"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.4.2"
