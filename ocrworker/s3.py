@@ -53,8 +53,10 @@ def is_enabled():
 def obj_exists(keyname: str) -> bool:
     client = get_client()
     try:
+        logger.debug(f"Checking of -{keyname}- objects exists")
         client.head_object(Bucket=get_bucket_name(), Key=keyname)
-    except ClientError:
+    except ClientError as ex:
+        logger.debug(f"ClientError: {ex}")
         return False
 
     return True
