@@ -9,7 +9,7 @@ readme = "README.md"
 python = "^3.13"
 ocrmypdf = "^16.6"
 ocrmypdf-papermerge = "0.7.1"
-celery = {extras = ["redis"], version = "^5.4.0"}
+celery = {extras = ["redis"], version = "^5.5.3"}
 sqlalchemy = "^2.0.30"
 typer = "^0.15"
 pydantic = "^2.7.4"
