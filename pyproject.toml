@@ -35,7 +35,7 @@ ocr = "ocrworker.cli.ocr:app"
 worker = "celery -A ocrworker.celery_app worker"
 
 [tool.poetry.group.dev.dependencies]
-black = "^24.4.2"
+black = "^25.1.0"
 pre-commit = "^3.7.1"
 taskipy = "^1.12.2"
 
