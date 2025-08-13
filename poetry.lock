@@ -1187,14 +1187,14 @@ files = [
 
 [[package]]
 name = "ocrmypdf"
-version = "16.6.2"
+version = "16.10.4"
 description = "OCRmyPDF adds an OCR text layer to scanned PDF files, allowing them to be searched"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "ocrmypdf-16.6.2-py3-none-any.whl", hash = "sha256:24b4d7454bbcbec3b017e55fcc5827c3da24c8f0abbb1efdf695020bbf7ca47f"},
-    {file = "ocrmypdf-16.6.2.tar.gz", hash = "sha256:dd08d32b3d989ba6d7b9f0dcebe3c1bcc049d06609916ac476c1f985b7605111"},
+    {file = "ocrmypdf-16.10.4-py3-none-any.whl", hash = "sha256:061f3165d09ffafac975cea00803802b8a75551ada9965292ea86ea382673688"},
+    {file = "ocrmypdf-16.10.4.tar.gz", hash = "sha256:de749ef5f554b63d57e68d032e7cba5500cbd5030835bf24f658f7b7a04f3dc1"},
 ]
 
 [package.dependencies]
@@ -1203,17 +1203,17 @@ img2pdf = ">=0.5"
 packaging = ">=20"
 pdfminer-six = ">=20220319"
 pi-heif = "*"
-pikepdf = ">=8.10.1"
+pikepdf = ">=8.10.1,<9.8.0 || >9.8.0"
 pillow = ">=10.0.1"
 pluggy = ">=1"
 rich = ">=13"
 
 [package.extras]
-docs = ["sphinx", "sphinx-issues", "sphinx-rtd-theme"]
+docs = ["myst-parser (>=4.0.1)", "sphinx", "sphinx-issues", "sphinx-rtd-theme"]
 extended-test = ["pymupdf (>=1.19.1)"]
 test = ["coverage[toml] (>=6.2)", "hypothesis (>=6.36.0)", "pytest (>=6.2.5)", "pytest-cov (>=3.0.0)", "pytest-xdist (>=2.5.0)", "python-xmp-toolkit (==2.0.1)", "reportlab (>=3.6.8)", "types-humanfriendly", "types-pillow"]
 watcher = ["python-dotenv", "typer-slim[standard]", "watchdog (>=1.0.2)"]
-webservice = ["flask (>=2.0.1)"]
+webservice = ["streamlit (>=1.41.0)"]
 
 [[package]]
 name = "ocrmypdf-papermerge"
@@ -2363,4 +2363,4 @@ pg = ["psycopg2"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.13"
-content-hash = "11f81366aa6a567da00080c9920d46eca4ac3784c8bce35aebd5d86780360110"
+content-hash = "6d1134ef618e0192cd0d00125ffdd9692e16844f1ec32c082d10006cc7a226dd"
