@@ -9,8 +9,8 @@ readme = "README.md"
 python = "^3.13"
 ocrmypdf = "^16.6"
 ocrmypdf-papermerge = "0.7.1"
-celery = {extras = ["redis"], version = "^5.4.0"}
-sqlalchemy = "^2.0.30"
+celery = {extras = ["redis"], version = "^5.5.3"}
+sqlalchemy = "^2.0.43"
 typer = "^0.15"
 pydantic = "^2.7.4"
 pydantic-settings = "^2.3.2"
@@ -35,7 +35,7 @@ ocr = "ocrworker.cli.ocr:app"
 worker = "celery -A ocrworker.celery_app worker"
 
 [tool.poetry.group.dev.dependencies]
-black = "^24.4.2"
+black = "^25.1.0"
 pre-commit = "^3.7.1"
 taskipy = "^1.12.2"
 
