@@ -10,7 +10,7 @@ python = "^3.13"
 ocrmypdf = "^16.6"
 ocrmypdf-papermerge = "0.7.1"
 celery = {extras = ["redis"], version = "^5.5.3"}
-sqlalchemy = "^2.0.30"
+sqlalchemy = "^2.0.43"
 typer = "^0.15"
 pydantic = "^2.7.4"
 pydantic-settings = "^2.3.2"
