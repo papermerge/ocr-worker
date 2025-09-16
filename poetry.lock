@@ -1191,14 +1191,14 @@ files = [
 
 [[package]]
 name = "ocrmypdf"
-version = "16.10.4"
+version = "16.11.0"
 description = "OCRmyPDF adds an OCR text layer to scanned PDF files, allowing them to be searched"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "ocrmypdf-16.10.4-py3-none-any.whl", hash = "sha256:061f3165d09ffafac975cea00803802b8a75551ada9965292ea86ea382673688"},
-    {file = "ocrmypdf-16.10.4.tar.gz", hash = "sha256:de749ef5f554b63d57e68d032e7cba5500cbd5030835bf24f658f7b7a04f3dc1"},
+    {file = "ocrmypdf-16.11.0-py3-none-any.whl", hash = "sha256:13628294a309c85b21947b5c7bc7fcd202464517c14b71a050adc9dde85c48f7"},
+    {file = "ocrmypdf-16.11.0.tar.gz", hash = "sha256:d89077e503238dac35c6e565925edc8d98b71e5289853c02cacbc1d0901f1be7"},
 ]
 
 [package.dependencies]
@@ -2370,4 +2370,4 @@ pg = ["psycopg2"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.13"
-content-hash = "f28440455484d4ba93deff3b1ee8870db32d2ecbdf240a94a1243fddf33673f0"
+content-hash = "4682d03c4c69d0eae8bc1303ed3b8722c7ecf4c0ca852a6e3c5686ce92f9e748"
