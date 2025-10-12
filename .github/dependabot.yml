@@ -1,20 +1,39 @@
 version: 2
 updates:
-
   - package-ecosystem: github-actions
     directory: "/.github/workflows"
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+      github-actions-major:
+        patterns:
+          - "*"
+        update-types:
+          - "major"
 
-  - package-ecosystem: pip # also includes poetry
+  - package-ecosystem: pip
     directory: "/"
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
+    groups:
+      python-dependencies:
+        patterns:
+          - "*"
 
   - package-ecosystem: docker
     directory: "/docker"
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
+    groups:
+      docker:
+        patterns:
+          - "*"
